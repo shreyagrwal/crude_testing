@@ -1,0 +1,355 @@
+from SignalMasterABC import SignalMaster
+from modules import TradingBook
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import pyfolio as pf
+
+do_print = False
+TRADINGBEGIN = '2000'
+# Each class needs to re-read the
+
+
+class MaPenetration(SignalMaster):
+
+    def __init__(self, first_rolling, second_rolling, third_rolling, atr_stop_loss, entry_atr=0):
+        super().__init__()
+        self.first_rolling = first_rolling
+        self.second_rolling = second_rolling
+        self.third_rolling = third_rolling
+        self.atr_stop_loss = atr_stop_loss
+        self.entry_atr = entry_atr
+        self.trade_checking_df = pd.DataFrame()
+        self.recap_arr = []
+        self.my_date_list = []
+        self.no_trade_ratio = 1  # This is 20/50 MA filter. 1 means no filter is applied
+        self.signal_df = None
+
+    def hull_moving_average(self, window_size):
+        signal_df = self.df2m.copy()
+        signal_df['momentum'] = signal_df['Close'].diff()*-1
+        weighted_moving_average = 2 * signal_df['momentum'].rolling(window_size//2).mean() - signal_df['momentum'].rolling(window_size).mean()
+        hull_moving_average = weighted_moving_average.rolling(int(window_size**0.5)).mean()
+        return hull_moving_average
+
+    def triple_exponential_moving_average(self, window_size):
+         signal_df = self.df2m.copy()
+         signal_df['momentum'] = signal_df['Close'].diff()*-1
+         ema1 = signal_df['momentum'].ewm(window_size).mean()
+         ema2 = ema1.ewm(window_size).mean()
+         ema3 = ema2.ewm(window_size).mean()
+    
+         tema = 3 * (ema1 - ema2) + ema3
+    
+         return tema
+    
+    def calculate_adx(self, period=14):
+        # Calculate True Range (TR)
+        data = self.df2m.copy()
+        high_low = data['High'] - data['Low']
+        high_close = np.abs(data['High'] - data['Close'].shift())
+        low_close = np.abs(data['Low'] - data['Close'].shift())
+        data['TR'] = high_low.combine(high_close, max).combine(low_close, max)
+        
+        # Calculate +DM and -DM
+        data['+DM'] = np.where((data['High'] - data['High'].shift()) > (data['Low'].shift() - data['Low']), 
+                            data['High'] - data['High'].shift(), 0)
+        data['+DM'] = np.where(data['+DM'] < 0, 0, data['+DM'])
+        data['-DM'] = np.where((data['Low'].shift() - data['Low']) > (data['High'] - data['High'].shift()), 
+                            data['Low'].shift() - data['Low'], 0)
+        data['-DM'] = np.where(data['-DM'] < 0, 0, data['-DM'])
+        
+        # Calculate ATR
+        data['ATR'] = data['TR'].rolling(window=period).mean()
+        
+        # Calculate +DI and -DI
+        data['+DI'] = 100 * (data['+DM'].ewm(alpha=1/period).mean() / data['ATR'])
+        data['-DI'] = 100 * (data['-DM'].ewm(alpha=1/period).mean() / data['ATR'])
+        
+        # Calculate DX
+        data['DX'] = 100 * np.abs((data['+DI'] - data['-DI']) / (data['+DI'] + data['-DI']))
+        
+        # Calculate ADX
+        data['ADX'] = data['DX'].ewm(alpha=1/period).mean()
+    
+        return data['ADX']
+    
+    def get_signal_df(self):
+
+        signal_df = self.df2m.copy()
+        tema1 = self.triple_exponential_moving_average(self.first_rolling)
+        tema2 = self.hull_moving_average(self.second_rolling)
+        # tema3 = self.triple_exponential_moving_average(self.third_rolling)
+        hma = self.hull_moving_average(self.third_rolling)
+        signal_df['rolling_ma_first'] = signal_df['Close'].rolling(self.first_rolling).mean()
+        signal_df['rolling_tema_first'] = tema1.diff()
+        signal_df['rolling_tema_first'] = signal_df['rolling_tema_first']
+        signal_df['rolling_ma_second'] = signal_df['Close'].rolling(self.second_rolling).mean()
+        signal_df['rolling_tema_second'] = tema2.diff()
+        signal_df['rolling_tema_second']= signal_df['rolling_tema_second']
+        signal_df['rolling_tema_third'] = hma.diff()
+        signal_df['rolling_tema_third'] = signal_df['rolling_tema_third']
+        signal_df['diff'] = tema1 -tema2
+        signal_df['adx'] = self.calculate_adx()
+        signal_df['diff_lag'] = signal_df['diff'].shift()
+        signal_df['rolling_sum_first_minus1'] = signal_df['Close'].rolling(self.first_rolling - 1).sum().shift()
+        signal_df['rolling_sum_second_minus1'] = signal_df['Close'].rolling(self.second_rolling - 1).sum().shift()
+        signal_df['high_previous'] = signal_df['High'].shift(3)
+        signal_df['low_previous'] = signal_df['Close'].shift(3)
+
+        # The identifier should use shift as we do not know the close price
+        signal_df['rolling_ma_20'] = signal_df['Close'].shift().rolling(20).mean()
+        signal_df['rolling_ma_50'] = signal_df['Close'].shift().rolling(50).mean()
+
+        signal_df['rolling_gap'] = (signal_df['rolling_tema_first'] - signal_df['rolling_tema_second'])
+        signal_df['TradingVol'] = (300 / self.ser_atr).fillna(0).astype(int)
+        signal_df = signal_df.dropna()
+
+        signal_df['previous_gap'] = signal_df['rolling_gap'].shift(1)
+        signal_df['forward_gap'] = signal_df['rolling_gap'].shift(-1)
+        signal_df['crossing'] = (signal_df['rolling_gap'] * signal_df['previous_gap']) < 0
+        signal_df['cross_signal'] = np.sign(signal_df['rolling_gap'])
+
+        signal_df['target_open_price'] = ((signal_df['rolling_sum_second_minus1'] * self.first_rolling -
+                                           signal_df['rolling_sum_first_minus1'] * self.second_rolling) /
+                                          (self.second_rolling - self.first_rolling))
+        
+        signal_df['target_open_price'] = ((signal_df['rolling_sum_second_minus1'] * self.first_rolling -
+                                           signal_df['rolling_sum_first_minus1'] * self.second_rolling) /
+                                          (self.second_rolling - self.first_rolling))
+
+        signal_df['target_open_price'] = (signal_df['target_open_price'] +
+                                          self.ser_atr.loc[signal_df.index] *
+                                          self.entry_atr * np.where(signal_df['previous_gap'] > 0, -1, 1)).round(2)
+        self.signal_df = signal_df
+
+    def signal_execution_backtesting(self):
+
+        if self.signal_df is None:
+            self.get_signal_df()
+
+        my_book = TradingBook()
+
+        for my_date, row_ind in self.signal_df.loc[TRADINGBEGIN:].iterrows():
+
+            # Trade Size
+            t_size = row_ind['TradingVol']
+            if do_print:
+                print('-' * 55)
+                print(my_date)
+
+            self.trade_checking_df.loc[my_date, 'rolling_gap'] = row_ind['rolling_gap']
+            self.trade_checking_df.loc[my_date, 'previous_gap'] = row_ind['previous_gap']
+            self.trade_checking_df.loc[my_date, 'Open'] = row_ind['Open']
+            self.trade_checking_df.loc[my_date, 'High'] = row_ind['High']
+            self.trade_checking_df.loc[my_date, 'Low'] = row_ind['Low']
+
+            row_m2 = self.df2m.loc[my_date]
+            i_atr = self.ser_atr.loc[my_date]
+
+            if row_m2.isna().any():
+                continue
+
+            my_position = my_book.position('FP')
+            self.trade_checking_df.loc[my_date, 'open_position'] = my_position
+            if my_position != 0:
+                position_price = my_book.get_avg_open_price('FP')
+                self.trade_checking_df.loc[my_date, 'open_position_price'] = position_price
+            trade_price = np.NaN
+            # short open
+            if row_ind['rolling_tema_third']> row_ind['rolling_tema_second'] and row_ind['rolling_tema_third']> row_ind['rolling_tema_first']:
+                if row_ind['rolling_gap'] < 0 and row_ind['previous_gap'] >= 0:
+                    trade_price = row_ind['Close']
+                
+                if not np.isnan(trade_price):
+                    target_trade = -t_size
+
+                    # if row_ind['rolling_ma_20'] >= row_ind['rolling_ma_50']:
+                    #     target_trade *= self.no_trade_ratio
+                    trading_vol = target_trade 
+                    if trading_vol != 0:
+                        my_book.trade(my_date, 'FP', -t_size, trade_price, self.contract_size)
+                        self.trade_checking_df.loc[my_date, 'trade_price'] = trade_price
+                        self.trade_checking_df.loc[my_date, 'trade_vol'] = trading_vol
+                        self.trade_checking_df.loc[my_date, 'checktrade'] = 1
+                        if do_print:
+                            print('-' * 55)
+                            print("Trade {} at {}".format(trading_vol, trade_price))
+
+             # long open        
+            elif row_ind['rolling_tema_third']< row_ind['rolling_tema_second'] and row_ind['rolling_tema_third']< row_ind['rolling_tema_first']:
+                if row_ind['rolling_gap'] > 0 and row_ind['previous_gap'] <= 0:
+                    trade_price = row_ind['Close']
+
+                if not np.isnan(trade_price):
+                    target_trade = t_size
+                    print(t_size)
+
+ 
+                    trading_vol = target_trade
+                    if trading_vol != 0:
+                        my_book.trade(my_date, 'FP', t_size, trade_price, self.contract_size)
+                        self.trade_checking_df.loc[my_date, 'trade_price'] = trade_price
+                        self.trade_checking_df.loc[my_date, 'trade_vol'] = trading_vol
+                        self.trade_checking_df.loc[my_date, 'checktrade'] = 1
+                        if do_print:
+                            print('-' * 55)
+                            print("Trade {} at {}".format(trading_vol, trade_price))
+
+            # short close
+            elif row_ind['rolling_tema_third']> row_ind['rolling_tema_second'] and row_ind['rolling_tema_third']> row_ind['rolling_tema_first'] and row_ind['previous_gap'] < 0 and row_ind['rolling_gap'] >= 0 and my_position != 0:
+                trade_price = row_ind['Close']
+
+
+                trading_vol = - my_position
+
+                if trading_vol != 0:
+                    my_book.trade(my_date, 'FP', - my_position, trade_price, self.contract_size)
+                    self.trade_checking_df.loc[my_date, 'trade_price'] = trade_price
+                    self.trade_checking_df.loc[my_date, 'trade_vol'] = trading_vol
+                    self.trade_checking_df.loc[my_date, 'checktrade'] = 1
+                    my_position = 0
+                    if do_print:
+                        print('-' * 55)
+                        print("Trade {} at {}".format(trading_vol, trade_price))
+
+            # short close 2
+            elif row_ind['rolling_tema_third']< row_ind['rolling_tema_second'] or row_ind['rolling_tema_third']< row_ind['rolling_tema_first'] and my_position < 0:
+                trade_price = row_ind['Close']
+
+
+                trading_vol = - my_position
+
+                if trading_vol != 0:
+                    my_book.trade(my_date, 'FP', - my_position, trade_price, self.contract_size)
+                    self.trade_checking_df.loc[my_date, 'trade_price'] = trade_price
+                    self.trade_checking_df.loc[my_date, 'trade_vol'] = trading_vol
+                    self.trade_checking_df.loc[my_date, 'checktrade'] = 1
+                    my_position = 0
+                    if do_print:
+                        print('-' * 55)
+                        print("Trade {} at {}".format(trading_vol, trade_price))
+
+
+            # long close
+            elif row_ind['rolling_tema_third']< row_ind['rolling_tema_second'] and row_ind['rolling_tema_third']< row_ind['rolling_tema_first'] and row_ind['previous_gap'] > 0 and row_ind['rolling_gap'] <= 0 and my_position != 0:
+                trade_price = row_ind['Close']
+
+                trading_vol = - my_position
+
+                if trading_vol != 0:
+                    my_book.trade(my_date, 'FP', - my_position, trade_price, self.contract_size)
+                    self.trade_checking_df.loc[my_date, 'trade_price'] = trade_price
+                    self.trade_checking_df.loc[my_date, 'trade_vol'] = trading_vol
+                    self.trade_checking_df.loc[my_date, 'checktrade'] = 1
+                    my_position = 0
+                    if do_print:
+                        print('-' * 55)
+                        print("Trade {} at {}".format(trading_vol, trade_price))
+
+            #long close 2
+            elif row_ind['rolling_tema_third']> row_ind['rolling_tema_second'] or row_ind['rolling_tema_third']> row_ind['rolling_tema_first'] and my_position > 0:
+                trade_price = row_ind['Close']
+
+                trading_vol = - my_position
+
+                if trading_vol != 0:
+                    my_book.trade(my_date, 'FP', - my_position, trade_price, self.contract_size)
+                    self.trade_checking_df.loc[my_date, 'trade_price'] = trade_price
+                    self.trade_checking_df.loc[my_date, 'trade_vol'] = trading_vol
+                    self.trade_checking_df.loc[my_date, 'checktrade'] = 1
+                    my_position = 0
+                    if do_print:
+                        print('-' * 55)
+                        print("Trade {} at {}".format(trading_vol, trade_price))
+
+            my_position = my_book.position('FP')
+            # Now the stop loss
+            if my_position < 0:
+                position_price = my_book.get_avg_open_price('FP')
+                stop_loss_target = np.round(position_price + self.atr_stop_loss * i_atr, 2)
+                # Stop loss
+                if row_m2['High'] > stop_loss_target:
+                    my_book.trade(my_date, 'FP', -my_position, stop_loss_target, self.contract_size)
+                    self.trade_checking_df.loc[my_date, 'stop_price_short'] = stop_loss_target
+                    self.trade_checking_df.loc[my_date, 'stop_cost_short'] = position_price
+                    self.trade_checking_df.loc[my_date, 'stop_atr_short'] = self.atr_stop_loss * i_atr
+                    self.trade_checking_df.loc[my_date, 'trade_vol_stop'] = my_position
+                    self.trade_checking_df.loc[my_date, 'checktrade'] = 1
+                    my_position = 0
+                    if do_print:
+                        print('-' * 55)
+                        print("Short Stop Loss, {} at ATR Loss {}".format(stop_loss_target, self.atr_stop_loss * i_atr))
+            elif my_position > 0:
+                position_price = my_book.get_avg_open_price('FP')
+                stop_loss_target = np.round(position_price - self.atr_stop_loss * i_atr, 2)
+                # Stop loss
+                if row_m2['Low'] < stop_loss_target:
+                    my_book.trade(my_date, 'FP', -my_position, stop_loss_target, self.contract_size)
+                    self.trade_checking_df.loc[my_date, 'stop_price_long'] = stop_loss_target
+                    self.trade_checking_df.loc[my_date, 'stop_cost_long'] = position_price
+                    self.trade_checking_df.loc[my_date, 'stop_atr_long'] = self.atr_stop_loss * i_atr
+                    self.trade_checking_df.loc[my_date, 'trade_vol_stop'] = -my_position
+                    self.trade_checking_df.loc[my_date, 'checktrade'] = 1
+                    my_position = 0
+                    if do_print:
+                        print('-' * 55)
+                        print("Long Stop Loss, {} at ATR Loss {}".format(stop_loss_target, self.atr_stop_loss * i_atr))
+            
+
+            # Now the reduction in position
+            my_position = my_book.position('FP')
+            if my_position < 0 and row_ind['Open'] > row_ind['high_previous']:
+                trade_price = row_ind['Open']
+                print(my_position, trade_price)
+                my_positions = my_position*0.5
+
+                if trading_vol != 0:
+                    my_book.trade(my_date, 'FP', -my_positions, trade_price, self.contract_size)
+                    self.trade_checking_df.loc[my_date, 'trade_price'] = trade_price
+                    self.trade_checking_df.loc[my_date, 'trade_vol'] = trading_vol
+                    self.trade_checking_df.loc[my_date, 'checktrade'] = 1
+                    if do_print:
+                        print('-' * 55)
+                        print("Reduce {} at {}".format(my_position, trade_price))
+
+            elif my_position > 0 and row_ind['Open'] < row_ind['low_previous']:
+                trade_price = row_ind['Open']
+                print(my_position, trade_price)
+                my_positions = my_position*0.5
+
+                if trading_vol != 0:
+                    my_book.trade(my_date, 'FP', -my_positions, trade_price, self.contract_size)
+                    self.trade_checking_df.loc[my_date, 'trade_price'] = trade_price
+                    self.trade_checking_df.loc[my_date, 'trade_vol'] = trading_vol
+                    self.trade_checking_df.loc[my_date, 'checktrade'] = 1
+                    if do_print:
+                        print('-' * 55)
+                        print("Reduce {} at {}".format(my_position, trade_price))
+
+            # Rolling logic
+            # if my_position != 0:
+            #     position_rolled = self.check_rolling(my_date, my_book)
+            #     if position_rolled and do_print:
+            #         _position_price = my_book.get_avg_open_price('FP')
+            #         print('-' * 55)
+            #         print("position price has been changed from {} to {}".format(trade_price, _position_price))
+
+            pos_fp = my_book.position('FP')
+            total_pnl = my_book.total_pnl('FP', row_m2['Close'], self.contract_size)
+
+            recap_row = {}
+            recap_row['FP Price'] = row_m2['Close']
+            recap_row['FP Pos'] = pos_fp
+            recap_row['P&L'] = total_pnl
+
+            # Index
+            self.my_date_list.append(my_date)
+            self.recap_arr.append(recap_row)
+
+        df_book = pd.DataFrame(self.recap_arr)
+        df_book.index = self.my_date_list
+        
+        # return self.trade_checking_df
+        return df_book, self.trade_checking_df, self.signal_df
+    
