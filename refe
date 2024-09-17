@@ -1,0 +1,260 @@
+import calendar
+import itertools
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt 
+from datetime import datetime, timedelta
+from pandas.plotting import autocorrelation_plot
+
+import warnings
+warnings.filterwarnings("ignore")
+
+from statsmodels.tsa.stattools import adfuller 
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.statespace.varmax import VARMAX
+
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import HuberRegressor
+from sklearn.linear_model import TheilSenRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import TimeSeriesSplit, GridSearchCV, train_test_split
+
+from BlueOcean import DataAccessApi
+from ag_datagenic_rest_client import DataGenic
+
+datagenic_rest_server = "http://lon-qdev-ap11"
+
+dg = DataGenic.create_from_environment()
+
+prices = pd.read_excel('S:/~Analysis Department/crude/Nigeria OSP/OSP.xlsx', index_col = 2 )
+
+osp = prices[(prices['Type'] == 'OSP')]
+platts = prices[(prices['Type'] == 'Platts')]
+argus = prices[(prices['Type'] == 'Argus')]
+
+df_osp = pd.DataFrame()
+
+for ind, row in osp.iterrows() :
+   
+    print(ind)
+    year = datetime.today().year
+    month = datetime.today().month
+    
+    osp_data = dg.get_time_series(model_url=osp.loc[osp.index == ind, 'Model'], from_date=datetime(year-40, month, 1), to_date=datetime.today())
+    osp_data = osp_data.rename(columns={'PRICE': ind}) 
+    df_osp = pd.concat([df_osp, osp_data.dropna()], axis=1)
+
+
+df_platts = pd.DataFrame()
+
+for ind, row in platts.iterrows() :
+   
+    print(ind)
+    year = datetime.today().year
+    month = datetime.today().month
+
+    
+    try:
+        platts_data = dg.get_time_series(model_url=platts.loc[platts.index == ind, 'Model'], from_date=datetime(year-40, month, 1), to_date=datetime.today())
+        platts_data = platts_data.rename(columns={'PRICE': ind})
+        platts_data = platts_data.dropna()
+        daily_range = pd.date_range(start=platts_data.index.min(), end=platts_data.index.max(), freq='D')
+        platts_data = platts_data.reindex(daily_range)
+        platts_data = platts_data.fillna(method='bfill')
+        df_platts = pd.concat([df_platts, platts_data], axis=1)
+    except:
+        print(f'  - No data for Platts {ind} model found')
+        pass
+
+df_argus = pd.DataFrame()
+
+argus_dated = dg.get_time_series(model_url='model://ARGUS_DLC/EU.OI.DLC.ARGUS.PA0001723.DTD/MID/ALL', from_date=datetime(datetime.today().year-40, datetime.today().month, 1), to_date=datetime.today())
+argus_dated = argus_dated.rename(columns={'PRICE': 'dated'})
+
+for ind, row in argus.iterrows() :
+   
+    print(ind)
+    year = datetime.today().year
+    month = datetime.today().month
+    
+    try:
+        argus_data = dg.get_time_series(model_url=argus.loc[argus.index == ind, 'Model'], from_date=datetime(year-40, month, 1), to_date=datetime.today())
+        argus_data = argus_data.rename(columns={'PRICE': ind})
+        argus_data = argus_data.sub(argus_dated['dated'], axis=0)
+        argus_data = argus_data.dropna()
+        daily_range = pd.date_range(start=argus_data.index.min(), end=argus_data.index.max(), freq='D')
+        argus_data = argus_data.reindex(daily_range)
+        argus_data = argus_data.fillna(method='bfill')
+        df_argus = pd.concat([df_argus, argus_data], axis=1)
+    except:
+        print(f'  - No data for Argus {ind} model found')
+        pass
+df_argus = df_argus.drop(['Dated'],axis=1)
+
+df_oo = df_osp.copy()
+df_pp = df_platts.copy()
+df_aa = df_argus.copy()
+df_o = df_oo[df_oo.index>='2011-09-01'].copy()
+df_p = df_pp[df_pp.index>='2011-09-01'].copy()
+df_a = df_aa[df_aa.index>='2011-09-01'].copy()
+
+df_o.index = df_o.index.astype(str)
+df_o.index = df_o.index.str.replace(r'-01$', '-20')
+df_o.index = pd.to_datetime(df_o.index)
+
+
+
+def custom_monthly_avg(df, price_cols):
+
+    results = []
+    current_start_date = df.index[df.index.day == 21].min()
+
+    while current_start_date < pd.to_datetime('today').normalize():
+        next_month = current_start_date + pd.DateOffset(months=1)
+        current_end_date = next_month.replace(day=20)
+        
+        mask = (df.index >= current_start_date) & (df.index <= current_end_date)
+        period_data = df.loc[mask]
+        if df.index.max()<current_end_date:
+            new_index = pd.date_range(start=current_start_date, end=current_end_date, freq='D')
+            period_data = period_data.reindex(new_index)
+            period_data = period_data.ffill()
+        period_means = {col: period_data[col].mean() for col in price_cols}        
+        results.append({'Time': current_end_date, **period_means})
+        current_start_date = next_month.replace(day=21)
+    
+    results_df = pd.DataFrame(results)
+    results_df['Time'] = pd.to_datetime(results_df['Time']).dt.date
+    results_df.set_index('Time', inplace=True)
+
+    
+    return results_df
+
+current_start_date = df_p.index[df_p.index.day == 21].min()
+next_month = current_start_date + pd.DateOffset(months=1)
+current_end_date = next_month.replace(day=20)
+mask = (df_p.index >= current_start_date) & (df_p.index <= current_end_date)
+period_data = df_p.loc[mask]
+
+df_p_avg  = custom_monthly_avg(df_p, df_p.columns).round(3)
+#df_p_avg
+
+df_a_avg = custom_monthly_avg(df_a, df_a.columns).round(3)
+
+
+for col in df_o.columns:
+    if col == 'Agbami' or col == 'Forcados' or col == 'Escravos' or col == 'Bonny Light' or col == 'Qua lboe' or col == 'Brass' or col == 'Amenam' or col == 'EA BLEND' or col == 'CJ BLEND' or col == 'ERHA' or col == 'Usan' or col == 'Zafiro':
+        df_avg[col] = (df_a_avg[col] - df_o[col] + df_p_avg[col]- df_o[col])/2
+    else:
+        df_avg[col] = df_p_avg[col] - df_o[col]
+
+df_regression_p = pd.DataFrame(columns=["Column", "Intercept", "Coefficient", "R-squared", "Correlation_m-1"])
+result_p = []
+result_p_all = []
+
+for col in df_o.columns:
+    df_o_mom = df_o.diff()
+    df1_cleaned = df_p_avg.shift(1)[col].dropna()
+    df2_cleaned = df_o_mom[col].dropna()
+    
+    # if col in ['Forcados','Akpo','Agbami','Bonny Light','Qua lboe','Brass', 'Amenam']:
+    #     date_cut = '2011-07-20'
+    #     df1_cleaned = df1_cleaned[pd.to_datetime(df1_cleaned.index) >= pd.to_datetime(date_cut)]
+    #     df2_cleaned = df2_cleaned[pd.to_datetime(df2_cleaned.index) >= pd.to_datetime(date_cut)]
+    # elif col == 'CJ BLEND':
+    #     date_cut = '2022-09-20'
+    #     df1_cleaned = df1_cleaned[pd.to_datetime(df1_cleaned.index) >= pd.to_datetime(date_cut)]
+    #     df2_cleaned = df2_cleaned[pd.to_datetime(df2_cleaned.index) >= pd.to_datetime(date_cut)]
+    # elif col == 'EA BLEND':
+    #     date_cut = '2022-05-20'
+    #     df1_cleaned = df1_cleaned[pd.to_datetime(df1_cleaned.index) >= pd.to_datetime(date_cut)]
+    #     df2_cleaned = df2_cleaned[pd.to_datetime(df2_cleaned.index) >= pd.to_datetime(date_cut)]
+    # elif col in ['Agbami', 'Akpo', 'Forcados', 'Escravos', 'Bonny Light', 'Qua Iboe','Brass', 'Egina', 'Bonga', 'ERHA','Usan','Escravos', 'Zafiro']:
+    #     date_cut1 = '2020-04-20'
+    #     date_cut2 = '2020-06-20'
+    #     df1_cleaned = df1_cleaned[~((pd.to_datetime(df1_cleaned.index) == pd.to_datetime(date_cut1))|(pd.to_datetime(df1_cleaned.index) == pd.to_datetime(date_cut2)))]
+    #     df2_cleaned = df2_cleaned[~((pd.to_datetime(df2_cleaned.index) == pd.to_datetime(date_cut1))|(pd.to_datetime(df2_cleaned.index) == pd.to_datetime(date_cut2)))]
+    # elif col in ['EREMO', 'JONES CREEK', 'OTAKIKPO', 'AJE']:
+    #     date_cut = '2023-06-20'
+    #     df1_cleaned = df1_cleaned[pd.to_datetime(df1_cleaned.index) >= pd.to_datetime(date_cut)]
+    #     df2_cleaned = df2_cleaned[pd.to_datetime(df2_cleaned.index) >= pd.to_datetime(date_cut)]
+    # elif col in ['PENNINGTON', 'ANTAN','OKWORI','UKPOKITI', 'IMA', 'OKORO', 'OYO', 'ASARAMATORU', 'ABO']:
+    #     date_cut = '2023-04-20'
+    #     df1_cleaned = df1_cleaned[pd.to_datetime(df1_cleaned.index) >= pd.to_datetime(date_cut)]
+    
+    min_shape = min(df1_cleaned.shape[0], df2_cleaned.shape[0])
+    print(df1_cleaned.shape[0], df2_cleaned.shape[0], min_shape)
+    df1_cleaned = df1_cleaned[-1*min_shape:]
+    df2_cleaned = df2_cleaned[-1*min_shape:]
+
+    model = LinearRegression() #TheilSenRegressor() #HuberRegressor() #LinearRegression()
+    model.fit(df1_cleaned.values.reshape(-1, 1), df2_cleaned.values)
+    
+    intercept = model.intercept_
+    coefficient = model.coef_[0]
+    r_squared = model.score(df1_cleaned.values.reshape(-1, 1), df2_cleaned.values)
+    corr = df1_cleaned.corr(df2_cleaned)
+    
+    df_regression_p = pd.concat([df_regression_p, pd.DataFrame({"Column": [col], "Intercept": [intercept], "Coefficient": [coefficient], "R-squared": [r_squared], "Correlation_m-1": [corr]})], ignore_index=True)
+    
+    new_x = np.array([df_p_avg.shift(1)[-1:][col].to_list()])  
+    predicted_y = model.predict(new_x)
+    result_p.append((col, predicted_y.round(2)[0], df_o_mom[-1:][col].to_list()[0], r_squared, corr))
+
+    plt.figure(figsize=(12, 5))
+    plt.subplot(1, 2, 1)
+    plt.scatter(df1_cleaned, df2_cleaned, label=col)
+    x_fit = np.linspace(df1_cleaned.min(), df2_cleaned.max(), 400)
+    y_fit = intercept + coefficient * x_fit
+    plt.plot(x_fit, y_fit, color='red', linestyle='--', label=f"Linear Fit ({coefficient:.2f}x + {intercept:.2f}) \n R-squared: {r_squared:.2f}")
+    plt.title(f"Platts Regression for {col}")
+    plt.xlabel(f"{col}_platts")
+    plt.ylabel(f"{col}_osp")
+    plt.legend()
+    
+    plt.subplot(1, 2, 2)
+    plt.plot(df2_cleaned.index,df2_cleaned, label = 'osp')
+    plt.plot(df1_cleaned.index,df1_cleaned, label = 'platts')
+    plt.title(f"Platts Regression for {col}")
+    plt.xlabel(f"Date")
+    plt.ylabel(f"{col}_price_diff")
+    plt.legend()
+    plt.show()
+
+predictions_p = pd.DataFrame()
+
+for col in df_p_avg.columns:
+    intercept = df_regression_p.loc[df_regression_p['Column'] == col, 'Intercept'].values[0]
+    coefficient = df_regression_p.loc[df_regression_p['Column'] == col, 'Coefficient'].values[0]
+
+    df_shifted_p = df_p_avg.shift(1)
+
+    predicted_values = intercept + coefficient * df_shifted_p[col]
+    df_pred = pd.DataFrame(predicted_values)
+    df_pred.index = pd.to_datetime(df_pred.index)
+    predicted_current_month = intercept + coefficient * df_p_avg[col][-1:]
+    df_pred_last = pd.DataFrame(predicted_current_month)
+    #if pd.to_datetime('today').normalize().day < 21:
+    df_pred_last.index = df_pred_last.index + pd.DateOffset(months=1)
+    predictions_p[[col]] = pd.concat([df_pred, df_pred_last],axis=0)
+    
+    upper_bound = df_pred + 0.3
+    lower_bound = df_pred - 0.3
+    
+    cut_year = -70
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(df_o_mom.index[cut_year:], df_o_mom[col].values[cut_year:], color='red', linestyle='dashed', label='Actual')
+    # plt.plot(dft.index[cut_year:], dft[col].values[cut_year:], color='orange', label='Current pred')
+    plt.plot(df_shifted_p.index[cut_year:-1], predicted_values[cut_year:-1], color='green', label='Behzad pred')
+    plt.fill_between(df_pred.index[cut_year:], lower_bound[col].values[cut_year:], upper_bound[col].values[cut_year:], color='green', alpha=0.3, label='+-30 cents Boundary')
+    plt.plot(df_shifted_p.index[-1:], predicted_values[-1:], 'go', label=f'Last Month Behzad - {df_p_avg.index[-1:][0].strftime("%Y-%m-%d")}')
+    plt.plot(df_p_avg.index[-1:] + pd.DateOffset(months=1), predicted_current_month, 'g*', label=f'Next Month Behzad - {df_pred_last.index[-1:][0].strftime("%Y-%m-%d")}')
+    plt.title(f'Platts {col} - Prediction vs Actual OSP')
+    plt.legend()
+    plt.show()
+
