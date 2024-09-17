@@ -1,0 +1,193 @@
+	Capacity Date	Region	Sub Region	Country	Refinery	CDU	HCU	Operator	Terminal/Port/Installatioin	Split
+										
+										
+ExxonMobil	2021	Europe	NWE	Belgium	Antwerp (ExxonMobil)	323	98	ExxonMobil	TEAM	0.42
+ExxonMobil	2021	Europe	NWE	United Kingdom	Fawley	276		ExxonMobil	ExxonMobil Fawley Refinery	1.00
+ExxonMobil	2021	Europe	Med	France	Port-Jerome Gravenchon	252	69	ExxonMobil	Le Havre	1.00
+ExxonMobil	2021	Europe	NWE	Netherlands	Rotterdam (Esso)	201	70	ExxonMobil	TEAM	0.26
+ExxonMobil	2021	Europe	Med	France	Fos sur Mer	140		ExxonMobil	Fos Sur Mer	0.26
+ExxonMobil	2021	Europe	NWE	Norway	Slagen	122		ExxonMobil	Slagen Storage Terminal	1.00
+BP	2021	Europe	NWE	Netherlands	BP Raffinaderij Rotterdam	377		BP	MOT	0.30
+BP	2021	Europe	NWE	Germany	Gelsenkirchen	265	56	BP	MOT	0.24
+BP	2021	Europe	Med	Spain	Castellon	110		BP	BP Castellon Refinery	1.00
+BP	2021	Europe	NWE	Germany	Lingen	97	29	BP	NWO Tank Farm	0.17
+Shell	2021	Europe	NWE	Netherlands	Pernis	425	91	Shell	TEAM	0.22
+Shell	2021	Europe	NWE	Germany	Rhineland Refinery	344	83	Shell	MOT	0.31
+Shell	2021	Europe	NWE	Denmark	Fredericia	72		Shell	Shell Fredericia	1.00
+Total	2021	Europe	NWE	Belgium	Total Raffinaderij Antwerpen	350	54	Total	MET	0.77
+Total	2021	Europe	NWE	France	Gonfreville l'Orcher	262	68	Total	Le Havre	1.00
+Total	2021	Europe	NWE	Germany	Leuna (Mider)	235	72	Total	NWO Tank Farm	0.41
+Total	2021	Europe	NWE	France	Donges	227		Total	Donges Refinery	1.00
+Total	2021	Europe	NWE	Netherlands	Zeeland Refinery	166	94	Total	MOT	0.15
+Total	2021	Europe	NWE	France	Feyzin	113		Total	Fos Sur Mer	0.21
+INEOS Refining	2021	Europe	Med	France	Lavera	210	24	INEOS Refining	Fos Sur Mer	0.40
+INEOS Refining	2021	Europe	NWE	United Kingdom	Grangemouth	206	44	INEOS Refining	Finnart Ocean	1.00
+AB Mazeikiu Nafta	2021	Europe	Eastern Europe	Lithuania	Orlen Lietuva	205	64	AB Mazeikiu Nafta	Butinge	1.00
+PKN Orlen	2021	Europe	NWE	Poland	Plock	331	104	PKN Orlen	Gdansk Naftoport PERN	0.61
+Grupa LOTOS	2021	Europe	NWE	Poland	Gdansk	210	73	Grupa LOTOS	Gdansk Naftoport PERN	0.39
+PCK Raffinerie	2021	Europe	NWE	Germany	Schwedt	239	70	PCK Raffinerie	NWO Tank Farm	0.42
+Bayernoil	2021	Europe	NWE	Germany	Bayernoil	217	40	Bayernoil	Trieste	0.23
+Oberhein	2021	Europe	NWE	Germany	Karlsruhe MiRO	322	76	Oberhein	Trieste	0.35
+OMV	2021	Europe	Eastern Europe	Austria	Schwechat	204	58	OMV	Trieste	0.22
+Varo Holding	2021	Europe	NWE	Switzerland	Cressier	68		Varo Holding	Fos Sur Mer	0.13
+Neste	2021	Europe	NWE	Finland	Porvoo	216	157	Neste	Porvoo	1.00
+Preem	2021	Europe	NWE	Sweden	Preemraff Gothenburg	132		Preem	Goteborg Refinery	0.60
+Preemraff Lysekil	2021	Europe	NWE	Sweden	Preemraff Lysekil	220	115	Preemraff Lysekil	Preemraff Lysekil Refinery	1.00
+Lindsey Oil Refinery	2021	Europe	NWE	United Kingdom	Lindsey Oil Refinery	113		Lindsey Oil Refinery	Immingham Oil Terminal	1.00
+Essar Energy	2021	Europe	NWE	United Kingdom	Stanlow	205		Essar Energy	Tranmere	1.00
+Valero Energy Corporation	2021	Europe	NWE	United Kingdom	Pembroke	220		Valero Energy Corporation	Valero Pembroke Refinery	1.00
+Phillips 66	2021	Europe	NWE	United Kingdom	Humber Refinery	233	23	Phillips 66	Tetney	1.00
+Irving Oil	2021	Europe	NWE	Ireland	Whitegate	71		Irving Oil	Whitegate Refinery	1.00
+Vitol	2021	Europe	NWE	Netherlands	Rotterdam (Vitol)	80		Vitol	Vopak Europoort	1.00
+Gunvor	2021	Europe	NWE	Germany	Gunvor Raffinerie Ingolstadt	110		Gunvor	Trieste	0.12
+Gunvor	2021	Europe	NWE	Belgium	Antwerp	108		Gunvor	MET	0.23
+Gunvor	2021	Europe	NWE	Netherlands	Gunvor Petroleum Rotterdam BV	83		Gunvor	TEAM	0.11
+Equinor	2021	Europe	NWE	Norway	Mongstad	226		Equinor	Mongstad	1.00
+Equinor	2021	Europe	NWE	Denmark	Kalundborg	102		Equinor	Kalundborg Refinery	1.00
+Eni	2021	Europe	Med	Italy	Sannazzaro	210	86	Eni	Genoa	1.00
+Eni	2021	Europe	Med	Italy	Taranto	114	39	Eni	Taranto	1.00
+Raffineria di Milazzo	2021	Europe	Med	Italy	Milazzo	252	66	Raffineria di Milazzo	Milazzo Refinery	1.00
+ISAB	2021	Europe	Med	Italy	ISAB (Priolo)	320	90	ISAB	ISAB	1.00
+Saras 	2021	Europe	Med	Italy	Sarroch Saras	316	125	Saras 	Sarroch Crude	1.00
+Sarpom 	2021	Europe	Med	Italy	Trecate	134		Sarpom 	Savona	1.00
+Sonatrach	2021	Europe	Med	Italy	Augusta	208	22	Sonatrach	Sonatrach Augusta Refinery	1.00
+Repsol	2021	Europe	Med	Spain	Cartagena (Repsol)	232	47	Repsol	Repsol Cartagena Refinery	0.60
+Repsol	2021	Europe	Med	Spain	Somorrostro	232	35	Repsol	Repsol Petronor Refinery	1.00
+Repsol	2021	Europe	Med	Spain	Tarragona (Repsol)	196	55	Repsol	Tarragona Refinery	1.00
+Repsol	2021	Europe	Med	Spain	Puertollano	158	37	Repsol	Repsol Cartagena Refinery	0.40
+Repsol	2021	Europe	Med	Spain	La Coruna	126	31	Repsol	Repsol Coruna Refinery	1.00
+CEPSA	2021	Europe	Med	Spain	San Roque	253	34	CEPSA	Gibraltar-San Roque Refinery	1.00
+CEPSA	2021	Europe	Med	Spain	La Rabida	220	51	CEPSA	La Rabida	1.00
+Galp Energia	2021	Europe	Med	Portugal	Sines	215	58	Galp Energia	Sines Refinery	1.00
+Galp Energia	2021	Europe	Med	Portugal	Porto	110		Galp Energia	Leixoes	1.00
+Klesch	2021	Europe	NWE	Germany	Heide	91	17	Klesch	Brunsbuttel Oil	1.00
+Hestya Energy	2021	Europe	NWE	Germany	Wilhelmshaven	64		Hestya Energy		1.00
+Holborn Europa Raffinerie	2021	Europe	NWE	Germany	Hamburg (Holborn)	99		Holborn Europa Raffinerie	Hamburg	1.00
+Nynas	2021	Europe	NWE	Germany	Harburg	58		Nynas		1.00
+OMV	2021	Europe	NWE	Germany	Burghausen	79		OMV	Trieste	0.09
+Rafineria Nafty Jedlicze 	2021	Europe	NWE	Poland	Jedlicze	3		Rafineria Nafty Jedlicze 		1.00
+Keele Oy	2021	Europe	NWE	Sweden	Gothenburg (ST1)	87		Keele Oy	Goteborg Refinery	0.40
+AB Nynas Petroleum	2021	Europe	NWE	Sweden	Nynäshamn	29		AB Nynas Petroleum	Nynashamn	1.00
+AB Nynas Petroleum	2021	Europe	NWE	Sweden	Gothenburg Nynas	13		AB Nynas Petroleum		1.00
+Vitol	2021	Europe	NWE	Belgium	Antwerp (Vitol)	21		Vitol		1.00
+Eastham Refinery	2021	Europe	NWE	United Kingdom	Eastham	22		Eastham Refinery	Eastham	1.00
+Hellenic Petroleum	2021	Europe	Med	Greece	Aspropyrgos	154	48	Hellenic Petroleum	Pachi	1.00
+Hellenic Petroleum	2021	Europe	Med	Greece	Elefsis	105	40	Hellenic Petroleum	Elefsina Refinery	1.00
+Hellenic Petroleum	2021	Europe	Med	Greece	Thessaloniki	98		Hellenic Petroleum	Thessaloniki Refinery	1.00
+Alma Petroli	2021	Europe	Med	Italy	Ravenna	11		Alma Petroli	Alma Petroli	1.00
+API	2021	Europe	Med	Italy	Falconara	84		API	Falconara Refinery	1.00
+Iplom	2021	Europe	Med	Italy	Busalla	40	17	Iplom	Genoa	1.00
+Asesa	2021	Europe	Med	Spain	Tarragona (ASESA)	23		Asesa		1.00
+Motor Oil (Hellas)	2021	Europe	Med	Greece	Corinth	185	37	Motor Oil (Hellas)	MOH Corinth Refinery	1.00
+SOCAR	2021	Europe	Med	Turkey	Aliaga	200	66	SOCAR	Tupras Aliaga Izmir Refinery	1.00
+TUPRAS	2021	Europe	Med	Turkey	Izmir	238	25	TUPRAS	Tupras Aliaga Izmir Refinery	1.00
+TUPRAS	2021	Europe	Med	Turkey	Izmit	226	70	TUPRAS	Tupras Izmit Refinery	1.00
+TUPRAS	2021	Europe	Med	Turkey	Kirikkale	108	15	TUPRAS	Ceyhan	1.00
+TUPRAS	2021	Europe	Med	Turkey	Batman	28		TUPRAS	Ceyhan	1.00
+Ceska Rafinerska Spolecnost	2021	Europe	Eastern Europe	Czech Republic	Litvinov	110	28	Ceska Rafinerska Spolecnost	Druzhba	1.00
+Ceska Rafinerska Spolecnost	2021	Europe	Eastern Europe	Czech Republic	Kralupy	66		Ceska Rafinerska Spolecnost	Druzhba	1.00
+INA	2021	Europe	Eastern Europe	Croatia	Rijeka	90	40	INA	Omisalj	0.17
+KazMunaiGas	2021	Europe	Eastern Europe	Romania	Petromidia	111	36	KazMunaiGas	Midia	1.00
+KazMunaiGas	2021	Europe	Eastern Europe	Romania	Ploesti Vega	11		KazMunaiGas	Constanta	0.07
+LUKOIL	2021	Europe	Eastern Europe	Romania	Petrotel	54		LUKOIL	Constanta	0.36
+Petrom	2021	Europe	Eastern Europe	Romania	Petrobrazi	86		Petrom	Constanta	0.57
+LUKOIL- Neftochim Burgas	2021	Europe	Eastern Europe	Bulgaria	Neftochim Burgas	195	71	LUKOIL- Neftochim Burgas	Burgas	1.00
+MOL	2021	Europe	Eastern Europe	Hungary	Duna	159	41	MOL	Omisalj	0.30
+Neftegazinkor	2021	Europe	Eastern Europe	Bosnia and Herzegovina	Bosanski Brod	60		Neftegazinkor	Omisalj	0.11
+NIS	2021	Europe	Eastern Europe	Serbia	Pancevo	101	30	NIS	Omisalj	0.19
+Slovnaft	2021	Europe	Eastern Europe	Slovakia	Bratislava	125	74	Slovnaft	Omisalj	0.23
+
+
+Eni	2021	Europe	Med	Italy	Livorno	106		Eni	Leghorn Livorno	1.00
+Neste	2021	Europe	NWE	Finland	Naantali	51		Neste	Naantali	1.00
+Total	2021	Europe	NWE	France	Grandpuits	105		Total		
+Total	2021	Europe	NWE	Germany	Brunsbuettel			Total		
+Shell	2021	Europe	NWE	Germany	Grasbrook			Shell		
+
+
+
+Owner	Refinery	Name for index
+Esso Belgium NV	Antwerp Refinery	BelgiumAntwerp (ExxonMobil)
+TotalEnergies SE	Antwerpen Refinery	BelgiumTotal Raffinaderij Antwerpen
+Crossbridge Energy Fredericia	Fredericia Refinery	DenmarkFredericia
+Kalundborg Refinery AS	Kalundborg Refinery	DenmarkKalundborg
+Esso Raffinage SAF	Notre-Dame-de-Gravenchon Refinery	FrancePort-Jerome Gravenchon
+Total Refining & Chemicals	Gonfreville Refinery (Normandie)	FranceGonfreville l'Orcher
+TotalEnergies SE	Donges Refinery	FranceDonges
+BP Europa SE	Lingen Emsland Refinery	GermanyLingen
+Bayernoil Raffineriegesellschaft mbH	Bayernoil Neustadt Refinery	GermanyBayernoil
+Bayernoil Raffineriegesellschaft mbH	Bayernoil Vohburg Refinery	GermanyBayernoil
+Gunvor Raffinerie Ingolstadt GmbH	Ingolstadt Refinery	GermanyGunvor Raffinerie Ingolstadt
+Holborn Europa Raffinerie GmbH	Holborn Refinery	GermanyHamburg (Holborn)
+Mineraloelraffinerie Oberrhein GmbH & Co KG	MiRO Refinery Karlsruhe	GermanyKarlsruhe MiRO
+OMV Deutschland GmbH	Burghausen Refinery	GermanyBurghausen
+PCK Raffinerie Gmbh	Schwedt Refinery	GermanySchwedt
+Raffinerie Heide GmbH	Heide Refinery	GermanyHeide
+Ruhr Oel GmbH	Gelsenkirchen Horst Refinery	GermanyGelsenkirchen
+Ruhr Oel GmbH	Gelsenkirchen Scholven Refinery	GermanyGelsenkirchen
+Shell Deutschland GmbH	Rheinland Godorf Refinery (North)	GermanyRhineland Refinery
+Shell Deutschland GmbH	Rheinland Wesseling Refinery (South)	GermanyRhineland Refinery
+TotalEnergies Raffinerie Mitteldeutschland GmbH	Leuna Refinery	GermanyLeuna (Mider)
+Irving Oil Limited	Whitegate Refinery	IrelandWhitegate
+BP Raffinaderij Rotterdam B.V.	BP Rotterdam Refinery	NetherlandsBP Raffinaderij Rotterdam
+Esso Netherlands B V	Rotterdam Refinery	NetherlandsRotterdam (Esso)
+Shell Nederland Raffinaderij B V	Pernis Refinery	NetherlandsPernis
+TotalEnergies SE	Zeeland Refinery	NetherlandsZeeland Refinery
+Equinor ASA	Mongstad Refinery	NorwayMongstad
+Nynas Petroleum AB	Nynas Gothenburg Refinery	SwedenGothenburg Nynas
+Nynas Petroleum AB	Nynashamn Refinery	SwedenNynäshamn
+Preem AB	Preemraff Gothenburg Refinery	SwedenPreemraff Gothenburg
+Preem AB	Preemraff Lysekil Refinery	SwedenPreemraff Lysekil
+St1 Refinery AB	St1 Gothenburg Refinery	SwedenGothenburg (ST1)
+Essar Oil UK	Stanlow Refinery	United KingdomStanlow
+Esso Petroleum Company Ltd	Fawley Refinery	United KingdomFawley
+PetroIneos Manufacturing Scotland Limited	Grangemouth Refinery	United KingdomGrangemouth
+Phillips 66	Humber Refinery	United KingdomHumber Refinery
+Prax Group	Lindsey Refinery	United KingdomLindsey Oil Refinery
+Shell Plc	Eastham Refinery	United KingdomEastham
+Valero Energy Corporation	Pembroke Refinery	United KingdomPembroke
+Sonatrach	Adrar Refinery	
+Sonatrach	Algiers Refinery (Sonatrach)	
+Sonatrach	Arzew Refinery	
+Sonatrach	Hassi-Messaoud Nr 1 & 2 Refineries	
+Sonatrach	Skikda Refinery	
+OMV Aktiengesellschaft	Schwechat Refinery	AustriaSchwechat
+Insa Oil	Rakovski Refinery	
+Lukoil Bulgaria	Lukoil Neftochim Burgas Refinery	BulgariaNeftochim Burgas
+INA Industrija Nafte D D	Rijeka Refinery	CroatiaRijeka
+Esso Raffinage SAF	Fos-sur-Mer Refinery	FranceFos sur Mer
+PetroIneos Manufacturing France SAS	PetroIneos Lavera Refinery	FranceLavera
+TotalEnergies SE	Feyzin Refinery	FranceFeyzin
+HelleniQ Energy	Aspropyrgos Refinery	GreeceAspropyrgos
+HelleniQ Energy	Elefsina Refinery	GreeceElefsis
+HelleniQ Energy	Thessaloniki Refinery	GreeceThessaloniki
+Motor Oil Hellas SA	Corinth Refinery	GreeceCorinth
+Alma Petroli SpA	Alma Petroli Refinery	ItalyRavenna
+Api Raffineria Di Ancona SpA	Api Ancona Refinery	ItalyFalconara
+Eni Spa	Sannazzaro Refinery	ItalySannazzaro
+Eni Spa	Taranto Refinery	ItalyTaranto
+Iplom SpA	Iplom Refinery	ItalyBusalla
+Isab Srl	Priolo Gargallo ISAB Refinery (North)	ItalyISAB (Priolo)
+Lukoil PJSC	Priolo Gargallo ISAB Refinery (South)	ItalyISAB (Priolo)
+Raffineria di Milazzo SpA	Milazzo Refinery	ItalyMilazzo
+Saras Raffinerie Sarde SpA	Saras Refinery	ItalySarroch Saras
+Sarpom S.r.l.	Sarpom Refinery	ItalyTrecate
+Sonatrach Raffineria Italiana S.r.l.	Augusta Refinery	ItalyAugusta
+Galp Energia SGPS SA	Sines Refinery	PortugalSines
+Naftna Industrija Srbije (NIS)	Pancevo Refinery	SerbiaPancevo
+BP ENERGIA ESPANA SA	Castellon Refinery	SpainCastellon
+Cepsa	Gibraltar Refinery	SpainSan Roque
+Cepsa	La Rabida Refinery	SpainLa Rabida
+Petronor SA	Bilbao Refinery	SpainSomorrostro
+Repsol Petroleo SA	Cartagena Refinery (Repsol)	SpainCartagena (Repsol)
+Repsol Petroleo SA	La Coruna Refinery	SpainLa Coruna
+Repsol Petroleo SA	Puertollano Refinery	SpainPuertollano
+Repsol Petroleo SA	Tarragona Refinery	SpainTarragona (Repsol)
+Varo Holding SA	Cressier Refinery	SwitzerlandCressier
+STIR	Bizerte Refinery	
+Koc Holding AS	Batman Refinery	TurkeyBatman
+Koc Holding AS	Izmir Refinery	TurkeyIzmir
+Koc Holding AS	Izmit Refinery	TurkeyIzmit
+Koc Holding AS	Kirikkale Refinery	TurkeyKirikkale
+SOCAR	Aegean Aliaga (Star Ege) Refinery	TurkeyAliaga
+
