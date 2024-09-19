@@ -1,0 +1,185 @@
+from tshistory.api import timeseries
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px 
+import numpy as np
+from datetime import date, timedelta, datetime
+from plotly.subplots import make_subplots
+
+tsa = timeseries('http://tst-qdev-ap9.petroineos.local/api/')
+
+from kpler.sdk.configuration import Configuration
+from kpler.sdk import Platform
+from kpler.sdk.resources.flows import Flows
+from kpler.sdk import FlowsDirection, FlowsSplit, FlowsPeriod, FlowsMeasurementUnit, VesselTypesCPP
+
+config = Configuration(Platform.Liquids, "mohammedhasan@petroineos.co.uk", "Distillates1!")
+flows_client = Flows(config)
+
+import dash
+import plotly.io as pio
+from dash.dependencies import Input, Output
+from dash import Dash, dcc, html, dash_table
+import dash_bootstrap_components as dbc
+import plotly.graph_objects as go
+import plotly.express as px
+from threading import Timer
+from dash_bootstrap_templates import load_figure_template
+load_figure_template("pulse")
+
+#=========================================================================== LIBRARY ===========================================================================#
+start_incentive = date(2023, 1, 1)
+end_incentive = date(2026, 7, 1)
+
+start_incentive = pd.to_datetime(start_incentive)
+end_incentive = pd.to_datetime(end_incentive)
+
+def fetch_line_data(series_id, col_name, start_date, end_date):
+    line_df = tsa.get(series_id)
+    line_df = pd.DataFrame(line_df)
+
+    min_date, max_date = line_df.index.min(), line_df.index.max()
+    print(f"Date range for fetched data: {min_date} to {max_date}")    
+    
+    print(f"Complete data fetched for series ID '{series_id}':\n", line_df)
+
+    line_df = line_df.rename(columns={series_id: col_name})
+    line_df = line_df.reset_index().rename(columns={'index': 'Date'})
+    line_df['Date'] = pd.to_datetime(line_df['Date'])
+    line_df = line_df[(line_df['Date'] >= start_date) & (line_df['Date'] <= end_date)]
+    print(f"Processed data for series ID '{series_id}':\n", line_df.tail())
+
+    return line_df
+
+belgium_series = fetch_line_data('gasoline.jodi.belgium.ending_stocks.kt.monthly','Belgium Gasoline Stocks',start_incentive, end_incentive)
+netherlands_series = fetch_line_data('gasoline.jodi.netherlands.ending_stocks.kt.monthly','Netherlands Gasoline Stocks',start_incentive, end_incentive)
+uk_series = fetch_line_data('gasoline.jodi.united_kingdom.ending_stocks.kt.monthly','UK Gasoline Stocks',start_incentive, end_incentive)
+
+merged_df = pd.merge(belgium_series, netherlands_series, on="Date")
+merged_df['ARA Gasoline Stocks'] = merged_df['Belgium Gasoline Stocks'] + merged_df['Netherlands Gasoline Stocks']
+ara_series = merged_df[['Date', 'ARA Gasoline Stocks']]
+final_df = pd.merge(uk_series, ara_series, on="Date")
+
+
+def plot_superimposed_lines(df, title):
+    fig = go.Figure()
+
+    '''    colors = ['#98c1d9', '#84a98c', '#3d5a80', '#00afb9', '#ee6c4d', '#293241', '#f28482']
+    '''
+
+    colors = ['#3d5a80', '#ee6c4d']
+
+    for i, col in enumerate(df.columns[1:]):
+        fig.add_trace(go.Scatter(
+            x=df['Date'], 
+            y=df[col], 
+            mode='lines', 
+            name=col, 
+            line=dict(color=colors[i % len(colors)], width=2), 
+            showlegend=True, 
+            connectgaps=True
+        ))
+
+    fig.update_layout(
+        title=title,
+        plot_bgcolor='white',
+        xaxis=dict(showline=True, linewidth=2, linecolor='black', title_font=dict(size=14)),
+        yaxis=dict(showline=True, linewidth=2, linecolor='black', title_font=dict(size=14))
+    )
+    
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+    
+    return fig
+
+def plot_monthly_bar_chart(df, title):
+    fig = go.Figure()
+
+    colors = ['#3d5a80', '#ee6c4d']
+
+    for i, col in enumerate(df.columns[1:]):
+        fig.add_trace(go.Bar(
+            x=df['Date'], 
+            y=df[col], 
+            name=col, 
+            marker_color=colors[i % len(colors)]
+        ))
+
+    fig.update_layout(
+        title=title,
+        plot_bgcolor='white',
+        xaxis=dict(showline=True, linewidth=2, linecolor='black', title_font=dict(size=14)),
+        yaxis=dict(showline=True, linewidth=2, linecolor='black', title_font=dict(size=14)),
+        barmode='group'
+    )
+    
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+    
+    return fig
+
+fig_lines = plot_superimposed_lines(final_df, 'JODI Belgium+NL and gasoline stocks vs UK stocks (kt)')
+fig_bars = plot_monthly_bar_chart(final_df, "JODI Belgium+NL and Gasoline Stocks vs UK Stocks")
+
+fig_lines.show()
+fig_bars.show()
+
+fig_bars.write_image("plot.png")
+
+import plotly.graph_objs as go
+
+def plot_monthly_bar_chart_with_trend(df, title):
+    fig = go.Figure()
+
+    colors = ['#3d5a80', '#ee6c4d']
+
+    # Adding bars for each data series
+    for i, col in enumerate(df.columns[1:]):
+        fig.add_trace(go.Bar(
+            x=df['Date'], 
+            y=df[col], 
+            name=col, 
+            marker_color=colors[i % len(colors)]
+        ))
+
+    # Adding a smoothing line to show the trend
+    for i, col in enumerate(df.columns[1:]):
+        df[f'{col} Trend'] = df[col].rolling(window=2).mean()  # Simple moving average
+
+        fig.add_trace(go.Scatter(
+            x=df['Date'], 
+            y=df[f'{col} Trend'], 
+            mode='lines', 
+            name=f'{col} Trend',
+            line=dict(color=colors[i % len(colors)], dash='dash')
+        ))
+
+    # Adjust the y-axis range to highlight small changes
+    y_min = df.iloc[:, 1:].min().min() * 0.95
+    y_max = df.iloc[:, 1:].max().max() * 1.05
+
+    fig.update_layout(
+        title=title,
+        plot_bgcolor='white',
+        xaxis=dict(showline=True, linewidth=2, linecolor='black', title_font=dict(size=14)),
+        yaxis=dict(showline=True, linewidth=2, linecolor='black', title_font=dict(size=14), range=[y_min, y_max]),
+        barmode='group'
+    )
+    
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+    
+    return fig
+
+
+# Plot with a dynamic title and highlighted trend
+fig = plot_monthly_bar_chart_with_trend(final_df, "Monthly Bar Chart with Highlighted Trend")
+fig.show()
+
+
+
+
+
+
+
+
